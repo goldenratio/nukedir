@@ -1,6 +1,27 @@
 # nukedir
 
-> Delete directory(folder) recursively from a specified path
+> Delete directories(folders) recursively from a specified path
+
+Consider below folder tree, you can use this CLI to remove all `Folder_1` directories from `User_folder`
+
+```
+User_folder
+├── Folder_A
+│   ├── Folder_1  (To remove)
+│   ├── Folder_2
+│   ├── Folder_3
+│   └── Folder_4
+├── Folder_B
+│   ├── Folder_1  (To remove)
+│   ├── Folder_5
+│   ├── Folder_6
+│   └── Folder_7
+└── Folder_C
+    ├── Folder_1  (To remove)
+    ├── Folder_2
+    ├── Folder_4
+    └── Folder_5
+```
 
 ### Usage
 
