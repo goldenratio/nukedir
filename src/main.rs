@@ -102,7 +102,7 @@ fn main() {
 
       match get_user_conifrmation("Are you sure, you want to delete above folders?") {
         Some(true) => delete_folders(&dir_list),
-        _ => println!("Action cacelled!"),
+        _ => println!("Action cancelled!"),
       }
     } else {
       println!("Folder with name `{}`, not found!", target_name);
