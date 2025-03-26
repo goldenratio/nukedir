@@ -25,8 +25,23 @@ User_folder
 
 ### Usage
 
-TODO
+```
+Usage: nukedir [OPTIONS] <DIR_NAME>
 
+Arguments:
+  <DIR_NAME>  Name of the directory that needs to deleted recursively
+
+Options:
+      --exclude-dir <EXCLUDE_DIR>  skip directories to match GLOB
+  -h, --help                       Print help
+  -V, --version                    Print version
+```
+
+#### Example
+
+```sh
+nukedir node_modules
+```
 
 ### Build
 
