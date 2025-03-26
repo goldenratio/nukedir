@@ -60,7 +60,9 @@ fn find_folders_recursive(
 }
 
 fn delete_folders(paths: &[PathBuf]) {
-  todo!()
+  for path in paths {
+    let _ = fs::remove_dir_all(path);
+  }
 }
 
 fn get_user_conifrmation(prompt: &str) -> Option<bool> {
