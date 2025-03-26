@@ -1,4 +1,4 @@
-use core::panic;
+use glob::Pattern;
 use std::{
   env,
   fs::{self},
@@ -20,14 +20,28 @@ struct Args {
   exclude_dir: Option<Vec<String>>,
 }
 
-fn find_folders(root: &Path, target_name: &str) -> Vec<PathBuf> {
+fn find_folders(root: &Path, target_name: &str, exclude_dir_pattern: &[Pattern]) -> Vec<PathBuf> {
   let mut result: Vec<PathBuf> = Vec::new();
-  find_folders_recursive(root, target_name, &mut result);
+  find_folders_recursive(root, target_name, exclude_dir_pattern, &mut result);
   result
 }
 
-fn find_folders_recursive(dir: &Path, target_name: &str, result: &mut Vec<PathBuf>) {
+fn find_folders_recursive(
+  dir: &Path,
+  target_name: &str,
+  exclude_dir_pattern: &[Pattern],
+  result: &mut Vec<PathBuf>,
+) {
   if !dir.is_dir() {
+    return;
+  }
+
+  let dir_str = dir.to_str().unwrap_or("");
+
+  if exclude_dir_pattern
+    .iter()
+    .any(|p| p.matches_path(dir) || dir_str.contains(p.as_str()))
+  {
     return;
   }
 
@@ -38,7 +52,7 @@ fn find_folders_recursive(dir: &Path, target_name: &str, result: &mut Vec<PathBu
         if entry.file_name() == target_name {
           result.push(path.clone());
         } else {
-          find_folders_recursive(&path, target_name, result);
+          find_folders_recursive(&path, target_name, exclude_dir_pattern, result);
         }
       }
     }
@@ -69,9 +83,15 @@ fn get_user_conifrmation(prompt: &str) -> Option<bool> {
 fn main() {
   let args = Args::parse();
   let target_name = &args.dir_name;
+  let exclude_dir_glob = &args.exclude_dir.unwrap_or_default();
+
+  let exclude_dir_pattern = exclude_dir_glob
+    .iter()
+    .filter_map(|p| Pattern::new(p).ok())
+    .collect::<Vec<Pattern>>();
 
   if let Ok(root) = env::current_dir() {
-    let dir_list = find_folders(root.as_path(), target_name);
+    let dir_list = find_folders(root.as_path(), target_name, &exclude_dir_pattern);
 
     if !dir_list.is_empty() {
       let dir_list_as_str = dir_list
