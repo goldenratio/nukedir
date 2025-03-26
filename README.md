@@ -52,10 +52,7 @@ cargo build --release
 ## Install
 
 ### Pre-built Binaries
-TODO
-
-### NPM
-TODO
+Checkout releases for binaries, https://github.com/goldenratio/nukedir/releases
 
 
 ## Releasing nukedir
