@@ -2,6 +2,7 @@ use core::panic;
 use std::{
   env,
   fs::{self},
+  io::{self, Write},
   path::{Path, PathBuf},
 };
 
@@ -44,6 +45,27 @@ fn find_folders_recursive(dir: &Path, target_name: &str, result: &mut Vec<PathBu
   }
 }
 
+fn delete_folders(paths: &[PathBuf]) {
+  todo!()
+}
+
+fn get_user_conifrmation(prompt: &str) -> Option<bool> {
+  println!("{} [y/N]", prompt);
+  if io::stdout().flush().is_err() {
+    return None;
+  }
+
+  let mut input = String::new();
+  if io::stdin().read_line(&mut input).is_err() {
+    return None;
+  }
+
+  match input.trim().to_lowercase().as_str() {
+    "y" => Some(true),
+    _ => Some(false),
+  }
+}
+
 fn main() {
   let args = Args::parse();
   let target_name = &args.dir_name;
@@ -57,10 +79,15 @@ fn main() {
         .filter_map(|x| x.to_str())
         .collect::<Vec<_>>();
       println!("{}", dir_list_as_str.join("\n"));
+
+      match get_user_conifrmation("Are you sure, you want to delete above folders?") {
+        Some(true) => delete_folders(&dir_list),
+        _ => println!("Action cacelled!"),
+      }
     } else {
-      // target_name not found!
+      println!("Folder with name `{}`, not found!", target_name);
     }
   } else {
-    panic!("Error getting env::current_dir()");
+    println!("Error getting env::current_dir()");
   }
 }
