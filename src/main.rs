@@ -65,7 +65,7 @@ fn delete_folders(paths: &[PathBuf]) {
   }
 }
 
-fn get_user_conifrmation(prompt: &str) -> Option<bool> {
+fn get_user_confirmation(prompt: &str) -> Option<bool> {
   println!("{} [y/N]", prompt);
   if io::stdout().flush().is_err() {
     return None;
@@ -102,7 +102,7 @@ fn main() {
         .collect::<Vec<_>>();
       println!("{}", dir_list_as_str.join("\n"));
 
-      match get_user_conifrmation("Are you sure, you want to delete above folders?") {
+      match get_user_confirmation("Are you sure, you want to delete above folders?") {
         Some(true) => delete_folders(&dir_list),
         _ => println!("Action cancelled!"),
       }
