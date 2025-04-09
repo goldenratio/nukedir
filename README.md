@@ -33,6 +33,7 @@ Arguments:
 
 Options:
       --exclude-dir <EXCLUDE_DIR>  skip directories to match GLOB
+      --max-depth <MAX_DEPTH>      Maximum directory depth to recurse into (inclusive) [default: 5]
   -h, --help                       Print help
   -V, --version                    Print version
 ```
