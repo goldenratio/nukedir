@@ -18,11 +18,27 @@ struct Args {
   /// skip directories to match GLOB
   #[arg(long)]
   exclude_dir: Option<Vec<String>>,
+
+  /// Maximum directory depth to recurse into (inclusive)
+  #[arg(long, default_value_t = 5)]
+  max_depth: u8,
 }
 
-fn find_folders(root: &Path, target_name: &str, exclude_dir_pattern: &[Pattern]) -> Vec<PathBuf> {
+fn find_folders(
+  root: &Path,
+  target_name: &str,
+  exclude_dir_pattern: &[Pattern],
+  max_depth: &u8,
+) -> Vec<PathBuf> {
   let mut result: Vec<PathBuf> = Vec::new();
-  find_folders_recursive(root, target_name, exclude_dir_pattern, &mut result);
+  find_folders_recursive(
+    root,
+    target_name,
+    exclude_dir_pattern,
+    max_depth,
+    0,
+    &mut result,
+  );
   result
 }
 
@@ -30,8 +46,14 @@ fn find_folders_recursive(
   dir: &Path,
   target_name: &str,
   exclude_dir_pattern: &[Pattern],
+  max_depth: &u8,
+  current_depth: u8,
   result: &mut Vec<PathBuf>,
 ) {
+  if current_depth > *max_depth {
+    return;
+  }
+
   if !dir.is_dir() {
     return;
   }
@@ -52,7 +74,14 @@ fn find_folders_recursive(
         if entry.file_name() == target_name {
           result.push(path.clone());
         } else {
-          find_folders_recursive(&path, target_name, exclude_dir_pattern, result);
+          find_folders_recursive(
+            &path,
+            target_name,
+            exclude_dir_pattern,
+            max_depth,
+            current_depth + 1,
+            result,
+          );
         }
       }
     }
@@ -86,6 +115,7 @@ fn main() {
   let args = Args::parse();
   let target_name = &args.dir_name;
   let exclude_dir_glob = &args.exclude_dir.unwrap_or_default();
+  let max_depth = &args.max_depth;
 
   let exclude_dir_pattern = exclude_dir_glob
     .iter()
@@ -93,7 +123,7 @@ fn main() {
     .collect::<Vec<Pattern>>();
 
   if let Ok(root) = env::current_dir() {
-    let dir_list = find_folders(root.as_path(), target_name, &exclude_dir_pattern);
+    let dir_list = find_folders(root.as_path(), target_name, &exclude_dir_pattern, max_depth);
 
     if !dir_list.is_empty() {
       let dir_list_as_str = dir_list
