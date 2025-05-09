@@ -22,6 +22,10 @@ struct Args {
   /// Maximum directory depth to recurse into (inclusive)
   #[arg(long, default_value_t = 5)]
   max_depth: u8,
+
+  /// skip directory deletion confirmation prompt
+  #[arg(long, default_value_t = false)]
+  yes: bool,
 }
 
 fn find_folders(
@@ -116,6 +120,7 @@ fn main() {
   let target_name = &args.dir_name;
   let exclude_dir_glob = &args.exclude_dir.unwrap_or_default();
   let max_depth = &args.max_depth;
+  let skip_confirmation = &args.yes;
 
   let exclude_dir_pattern = exclude_dir_glob
     .iter()
@@ -132,14 +137,20 @@ fn main() {
         .collect::<Vec<_>>();
       println!("{}", dir_list_as_str.join("\n"));
 
-      match get_user_confirmation("Are you sure, you want to delete above folders?") {
-        Some(true) => delete_folders(&dir_list),
-        _ => println!("Action cancelled!"),
+      if *skip_confirmation
+        || matches!(
+          get_user_confirmation("Are you sure, you want to delete above folders?"),
+          Some(true)
+        )
+      {
+        delete_folders(&dir_list);
+      } else {
+        println!("Action cancelled!")
       }
     } else {
-      println!("Folder with name `{}`, not found!", target_name);
+      eprintln!("Folder with name `{}`, not found!", target_name);
     }
   } else {
-    println!("Error getting env::current_dir()");
+    eprintln!("Error getting env::current_dir()");
   }
 }
