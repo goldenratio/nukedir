@@ -29,7 +29,7 @@ User_folder
 Usage: nukedir [OPTIONS] <DIR_NAME>
 
 Arguments:
-  <DIR_NAME>  Name of the directory that needs to deleted recursively
+  <DIR_NAME>  Name of the directory that needs to deleted recursively (GLOB)
 
 Options:
       --exclude-dir <EXCLUDE_DIR>  skip directories to match GLOB
@@ -43,6 +43,28 @@ Options:
 
 ```sh
 nukedir node_modules
+```
+
+#### GLOB Example
+
+```
+.
+├── Cargo.lock
+├── Cargo.toml
+├── foo2
+├── foo42
+├── foo6
+├── LICENSE
+├── README.md
+├── rustfmt.toml
+├── src
+└── target
+
+```
+To delete all folders starting from `foo${number}`,
+
+```sh
+nukerdir 'foo[0-9]*'
 ```
 
 ### Build
