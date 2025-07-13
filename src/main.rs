@@ -13,7 +13,7 @@ use clap::Parser;
 #[command(version, about, long_about = None)]
 struct Args {
   /// Name of the directory that needs to deleted recursively (GLOB)
-  dir_name: String,
+  dir_name: Vec<String>,
 
   /// skip directories to match GLOB
   #[arg(long)]
@@ -30,15 +30,15 @@ struct Args {
 
 fn find_folders(
   root: &Path,
-  target_pattern: &Pattern,
-  exclude_dir_pattern: &[Pattern],
+  target_pattern_list: &[Pattern],
+  exclude_dir_pattern_list: &[Pattern],
   max_depth: &u8,
 ) -> Vec<PathBuf> {
   let mut result: Vec<PathBuf> = Vec::new();
   find_folders_recursive(
     root,
-    target_pattern,
-    exclude_dir_pattern,
+    target_pattern_list,
+    exclude_dir_pattern_list,
     max_depth,
     0,
     &mut result,
@@ -48,8 +48,8 @@ fn find_folders(
 
 fn find_folders_recursive(
   dir: &Path,
-  target_pattern: &Pattern,
-  exclude_dir_pattern: &[Pattern],
+  target_pattern_list: &[Pattern],
+  exclude_dir_pattern_list: &[Pattern],
   max_depth: &u8,
   current_depth: u8,
   result: &mut Vec<PathBuf>,
@@ -64,7 +64,7 @@ fn find_folders_recursive(
 
   let dir_str = dir.to_str().unwrap_or("");
 
-  if exclude_dir_pattern
+  if exclude_dir_pattern_list
     .iter()
     .any(|p| p.matches_path(dir) || dir_str.contains(p.as_str()))
   {
@@ -77,18 +77,20 @@ fn find_folders_recursive(
       if path.is_dir() {
         let dir_name = entry.file_name();
         if let Some(dir_name_str) = dir_name.to_str() {
-          if target_pattern.matches(dir_name_str) {
-            result.push(path.clone());
-          } else {
-            find_folders_recursive(
-              &path,
-              target_pattern,
-              exclude_dir_pattern,
-              max_depth,
-              current_depth + 1,
-              result,
-            );
-          }
+          target_pattern_list.iter().for_each(|target_pattern| {
+            if target_pattern.matches(dir_name_str) {
+              result.push(path.clone());
+            } else {
+              find_folders_recursive(
+                &path,
+                target_pattern_list,
+                exclude_dir_pattern_list,
+                max_depth,
+                current_depth + 1,
+                result,
+              );
+            }
+          });
         }
       }
     }
@@ -120,14 +122,12 @@ fn get_user_confirmation(prompt: &str) -> Option<bool> {
 
 fn main() {
   let args = Args::parse();
-  // let target_name = &args.dir_name;
-  let target_pattern = match Pattern::new(&args.dir_name) {
-    Ok(p) => p,
-    Err(e) => {
-      eprintln!("Invalid glob pattern for dir_name: {}", e);
-      return;
-    }
-  };
+  let target_pattern_list = &args
+    .dir_name
+    .iter()
+    .filter_map(|p| Pattern::new(p).ok())
+    .collect::<Vec<Pattern>>();
+
   let exclude_dir_glob = &args.exclude_dir.unwrap_or_default();
   let max_depth = &args.max_depth;
   let skip_confirmation = &args.yes;
@@ -140,7 +140,7 @@ fn main() {
   if let Ok(root) = env::current_dir() {
     let dir_list = find_folders(
       root.as_path(),
-      &target_pattern,
+      target_pattern_list,
       &exclude_dir_pattern,
       max_depth,
     );
@@ -163,7 +163,7 @@ fn main() {
         println!("Action cancelled!")
       }
     } else {
-      eprintln!("Folder with name `{}`, not found!", target_pattern);
+      eprintln!("No matching folder names found!");
     }
   } else {
     eprintln!("Error getting env::current_dir()");
