@@ -62,7 +62,13 @@ fn find_folders_recursive(
     return;
   }
 
-  if exclude_dir_pattern_list.iter().any(|p| p.matches_path(dir)) {
+  let dir_str = dir.to_str().unwrap_or("");
+
+  if exclude_dir_pattern_list
+    .iter()
+    // also support non-glob pattern, with `.contains()`
+    .any(|p| p.matches_path(dir) || dir_str.contains(p.as_str()))
+  {
     return;
   }
 
