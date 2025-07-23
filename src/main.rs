@@ -32,7 +32,7 @@ fn find_folders(
   root: &Path,
   target_pattern_list: &[Pattern],
   exclude_dir_pattern_list: &[Pattern],
-  max_depth: &u8,
+  max_depth: u8,
 ) -> Vec<PathBuf> {
   let mut result: Vec<PathBuf> = Vec::new();
   find_folders_recursive(
@@ -50,11 +50,11 @@ fn find_folders_recursive(
   dir: &Path,
   target_pattern_list: &[Pattern],
   exclude_dir_pattern_list: &[Pattern],
-  max_depth: &u8,
+  max_depth: u8,
   current_depth: u8,
   result: &mut Vec<PathBuf>,
 ) {
-  if current_depth > *max_depth {
+  if current_depth > max_depth {
     return;
   }
 
@@ -62,36 +62,36 @@ fn find_folders_recursive(
     return;
   }
 
-  let dir_str = dir.to_str().unwrap_or("");
-
-  if exclude_dir_pattern_list
-    .iter()
-    .any(|p| p.matches_path(dir) || dir_str.contains(p.as_str()))
-  {
+  if exclude_dir_pattern_list.iter().any(|p| p.matches_path(dir)) {
     return;
+  }
+
+  if let Some(dir_name_str) = dir.file_name().and_then(|name| name.to_str()) {
+    if target_pattern_list.iter().any(|p| p.matches(dir_name_str)) {
+      // check if dir already exist in result
+      if !result
+        .iter()
+        .any(|existing| dir.starts_with(existing) && existing != dir)
+      {
+        result.push(dir.to_path_buf());
+      }
+      // dir will be deleted, no need recurse further
+      return;
+    }
   }
 
   if let Ok(entries) = fs::read_dir(dir) {
     for entry in entries.flatten() {
       let path = entry.path();
       if path.is_dir() {
-        let dir_name = entry.file_name();
-        if let Some(dir_name_str) = dir_name.to_str() {
-          target_pattern_list.iter().for_each(|target_pattern| {
-            if target_pattern.matches(dir_name_str) {
-              result.push(path.clone());
-            } else {
-              find_folders_recursive(
-                &path,
-                target_pattern_list,
-                exclude_dir_pattern_list,
-                max_depth,
-                current_depth + 1,
-                result,
-              );
-            }
-          });
-        }
+        find_folders_recursive(
+          &path,
+          target_pattern_list,
+          exclude_dir_pattern_list,
+          max_depth,
+          current_depth + 1,
+          result,
+        );
       }
     }
   }
@@ -129,8 +129,8 @@ fn main() {
     .collect::<Vec<Pattern>>();
 
   let exclude_dir_glob = &args.exclude_dir.unwrap_or_default();
-  let max_depth = &args.max_depth;
-  let skip_confirmation = &args.yes;
+  let max_depth = args.max_depth;
+  let skip_confirmation = args.yes;
 
   let exclude_dir_pattern = exclude_dir_glob
     .iter()
@@ -152,7 +152,7 @@ fn main() {
         .collect::<Vec<_>>();
       println!("{}", dir_list_as_str.join("\n"));
 
-      if *skip_confirmation
+      if skip_confirmation
         || matches!(
           get_user_confirmation("Are you sure, you want to delete above folders?"),
           Some(true)
