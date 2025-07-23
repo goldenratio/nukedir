@@ -138,18 +138,21 @@ fn main() {
     .collect::<Vec<Pattern>>();
 
   if let Ok(root) = env::current_dir() {
-    let dir_list = find_folders(
+    let mut dir_list = find_folders(
       root.as_path(),
       target_pattern_list,
       &exclude_dir_pattern,
       max_depth,
     );
 
+    dir_list.sort();
+
     if !dir_list.is_empty() {
       let dir_list_as_str = dir_list
         .iter()
         .filter_map(|x| x.to_str())
         .collect::<Vec<_>>();
+
       println!("{}", dir_list_as_str.join("\n"));
 
       if skip_confirmation
