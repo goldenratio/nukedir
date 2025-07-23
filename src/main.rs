@@ -157,7 +157,13 @@ fn main() {
 
       if skip_confirmation
         || matches!(
-          get_user_confirmation("Are you sure, you want to delete above folders?"),
+          get_user_confirmation(
+            format!(
+              "Are you sure, you want to delete above folders ({})?",
+              dir_list_as_str.len()
+            )
+            .as_str()
+          ),
           Some(true)
         )
       {
